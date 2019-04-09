@@ -2,7 +2,17 @@ package mapreduce
 
 import (
 	"hash/fnv"
+	"io/ioutil"
+	"encoding/json"
+	"os"
+	// "fmt"
 )
+
+func check_error(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
 
 func doMap(
 	jobName string, // the name of the MapReduce job
@@ -53,6 +63,21 @@ func doMap(
 	//
 	// Your code here (Part I).
 	//
+	bytes, err := ioutil.ReadFile(inFile)
+	check_error(err)
+	keyValues := mapF(inFile, string(bytes))
+
+	for _, keyValue := range keyValues {
+		// fmt.Printf("[%s] := {%s}", keyValue.Key, keyValue.Value)
+		r := ihash(keyValue.Key) % nReduce
+		fileName := reduceName(jobName, mapTask, r)
+		f, err2 := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		// fmt.Println("Open in common_map: ", fileName)
+		check_error(err2)
+		enc := json.NewEncoder(f)
+		enc.Encode(keyValue)
+		f.Close()
+	}
 }
 
 func ihash(s string) int {

@@ -1,5 +1,13 @@
 package mapreduce
 
+import (
+	"encoding/json"
+	"os"
+	"sort"
+	"bufio"
+	// "fmt"
+)
+
 func doReduce(
 	jobName string, // the name of the whole MapReduce job
 	reduceTask int, // which reduce task this is
@@ -7,12 +15,40 @@ func doReduce(
 	nMap int, // the number of map tasks that were run ("M" in the paper)
 	reduceF func(key string, values []string) string,
 ) {
+
+	keyValues := make(map[string][]string)
+	for i := 0; i < nMap; i++ {
+		fileName := reduceName(jobName, i, reduceTask)
+		finput, _ := os.Open(fileName)
+		scanner := bufio.NewScanner(finput)
+		for scanner.Scan() {
+			var keyValue KeyValue
+			json.Unmarshal([]byte(scanner.Text()), &keyValue)
+			keyValues[keyValue.Key] = append(keyValues[keyValue.Key], keyValue.Value)
+		}
+	}
+
+	f, err2 := os.Create(outFile)
+	// fmt.Println("Open in common_reduce: ", outFile)
+	keys := make([]string, len(keyValues))
+	i := 0
+	for key, _ := range keyValues {
+		keys[i] = key
+		i++
+	}
+	sort.Strings(keys)
+	defer f.Close()
+	check_error(err2)
+	enc := json.NewEncoder(f)
+	for _, key := range keys {
+		enc.Encode(KeyValue{key, reduceF(key, keyValues[key])})
+	}
 	//
 	// doReduce manages one reduce task: it should read the intermediate
 	// files for the task, sort the intermediate key/value pairs by key,
 	// call the user-defined reduce function (reduceF) for each key, and
 	// write reduceF's output to disk.
-	//
+	// 
 	// You'll need to read one intermediate file from each map task;
 	// reduceName(jobName, m, reduceTask) yields the file
 	// name from map task m.
