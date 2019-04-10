@@ -5,7 +5,7 @@ import (
 	"os"
 	"sort"
 	"bufio"
-	// "fmt"
+	"fmt"
 )
 
 func doReduce(
@@ -15,7 +15,7 @@ func doReduce(
 	nMap int, // the number of map tasks that were run ("M" in the paper)
 	reduceF func(key string, values []string) string,
 ) {
-
+	fmt.Printf("Enter reduce with outFile=%s\n", outFile)
 	keyValues := make(map[string][]string)
 	for i := 0; i < nMap; i++ {
 		fileName := reduceName(jobName, i, reduceTask)

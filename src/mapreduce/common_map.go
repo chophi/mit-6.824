@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"os"
-	// "fmt"
+	"fmt"
 )
 
 func check_error(err error) {
@@ -66,7 +66,7 @@ func doMap(
 	bytes, err := ioutil.ReadFile(inFile)
 	check_error(err)
 	keyValues := mapF(inFile, string(bytes))
-
+	fmt.Printf("Enter map with inFile=%s\n", inFile)
 	for _, keyValue := range keyValues {
 		// fmt.Printf("[%s] := {%s}", keyValue.Key, keyValue.Value)
 		r := ihash(keyValue.Key) % nReduce
